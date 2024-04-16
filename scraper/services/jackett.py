@@ -88,14 +88,12 @@ def scrape(query, altquery):
                     if not result.MagnetUri == None:
                         if not result.Tracker == None and not result.Size == None:
                             scraped_releases += [
-                                releases.release('[jackett: ' + str(result.Tracker) + ']', 'torrent', result.Title, [],float(result.Size) / 1000000000, [result.MagnetUri],seeders=res
-ult.Seeders)]
+                                releases.release('[jackett: ' + str(result.Tracker) + ']', 'torrent', result.Title, [],float(result.Size) / 1000000000, [result.MagnetUri],seeders=result.Seeders)]
                         elif not result.Tracker == None:
                             scraped_releases += [
                                 releases.release('[jackett: ' + str(result.Tracker) + ']', 'torrent', result.Title, [],1, [result.MagnetUri], seeders=result.Seeders)]
                         elif not result.Size == None:
-                            scraped_releases += [releases.release('[jackett: unnamed]', 'torrent', result.Title, [],float(result.Size) / 1000000000, [result.MagnetUri],seeders=result
-.Seeders)]
+                            scraped_releases += [releases.release('[jackett: unnamed]', 'torrent', result.Title, [],float(result.Size) / 1000000000, [result.MagnetUri],seeders=result.Seeders)]
                         response.Results.remove(result)
                 else:
                     response.Results.remove(result)
