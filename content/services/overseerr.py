@@ -282,7 +282,7 @@ class requests(classes.watchlist):
             for element in add:
                 if not element in self.data:
                     self.data.append(element)
-            ui_print('done')
+            ui_print(f'done {len(self.data)}')
 
     def update(self):
         global last_requests

@@ -94,7 +94,7 @@ class watchlist(classes.watchlist):
             ui_print("[plex error]: (watchlist exception): " + str(e), debug=ui_settings.debug)
             ui_print('[plex error]: could not reach plex')
         if len(users) > 0:
-            ui_print('done')
+            ui_print(f'done {len(self.data)}')
 
     def remove(self, item):
         if hasattr(item, 'user'):
@@ -850,7 +850,7 @@ class library(classes.library):
         for value in shows.values():
             list_.append(value)
         if len(list_) - len(current_library) > 0:
-            ui_print('done')
+            ui_print(f'done {len(list_)}')
             ui_print('[plex] getting metadata for ' + str(len(list_) - len(current_library)) + ' collected movies/shows ...')
         updated = False
         for item in list_:
