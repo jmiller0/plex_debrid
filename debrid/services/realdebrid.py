@@ -128,7 +128,12 @@ def download(element, stream=True, query='', force=False):
         wanted = element.files()
     for release in cached[:]:
         # if release matches query
-        if regex.match(query, release.title,regex.I) or force:
+        try:
+            match = regex.match(query, release.title,regex.I) or force
+        except Exception as e:
+            ui_print('[realdebrid] error: could not match query: ' + query + ' for release: ' + release.title, ui_settings.debug)
+            match = False
+        if match:
             if stream:
                 release.size = 0
                 for version in release.files:
