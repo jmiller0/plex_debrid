@@ -13,5 +13,5 @@ jobs:
         run: |
           curl -X POST -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/jmiller0/plex_debrid/dispatches" \
+            "https://api.github.com/repos/jmiller0/pd_zurg/dispatches" \
             -d '{"event_type": "trigger-build"}'
