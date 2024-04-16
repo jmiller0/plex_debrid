@@ -83,19 +83,25 @@ def scrape(query, altquery):
             result.Title = result.Title.replace(' ', '.')
             result.Title = result.Title.replace(':', '').replace("'", '')
             result.Title = regex.sub(r'\.+', ".", result.Title)
-            if regex.match(r'(' + altquery.replace('.', '\.').replace("\.*", ".*") + ')', result.Title,regex.I):
-                if not result.MagnetUri == None:
-                    if not result.Tracker == None and not result.Size == None:
-                        scraped_releases += [
-                            releases.release('[jackett: ' + str(result.Tracker) + ']', 'torrent', result.Title, [],float(result.Size) / 1000000000, [result.MagnetUri],seeders=result.Seeders)]
-                    elif not result.Tracker == None:
-                        scraped_releases += [
-                            releases.release('[jackett: ' + str(result.Tracker) + ']', 'torrent', result.Title, [],1, [result.MagnetUri], seeders=result.Seeders)]
-                    elif not result.Size == None:
-                        scraped_releases += [releases.release('[jackett: unnamed]', 'torrent', result.Title, [],float(result.Size) / 1000000000, [result.MagnetUri],seeders=result.Seeders)]
+            try:
+                if regex.match(r'(' + altquery.replace('.', '\.').replace("\.*", ".*") + ')', result.Title,regex.I):
+                    if not result.MagnetUri == None:
+                        if not result.Tracker == None and not result.Size == None:
+                            scraped_releases += [
+                                releases.release('[jackett: ' + str(result.Tracker) + ']', 'torrent', result.Title, [],float(result.Size) / 1000000000, [result.MagnetUri],seeders=res
+ult.Seeders)]
+                        elif not result.Tracker == None:
+                            scraped_releases += [
+                                releases.release('[jackett: ' + str(result.Tracker) + ']', 'torrent', result.Title, [],1, [result.MagnetUri], seeders=result.Seeders)]
+                        elif not result.Size == None:
+                            scraped_releases += [releases.release('[jackett: unnamed]', 'torrent', result.Title, [],float(result.Size) / 1000000000, [result.MagnetUri],seeders=result
+.Seeders)]
+                        response.Results.remove(result)
+                else:
                     response.Results.remove(result)
-            else:
-                response.Results.remove(result)
+            except Exception as e:
+                print(f"An error occurred: {e} with {result.Title}")
+                continue
         # Multiprocess resolving of result.Link for remaining releases
         results = [None] * len(response.Results[:200])
         threads = []
