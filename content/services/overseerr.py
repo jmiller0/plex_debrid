@@ -323,6 +323,10 @@ class requests(classes.watchlist):
                                     if not any(season.index == x.index for x in existing.Seasons):
                                         existing.Seasons.append(season)
                         ui_print('done')
+                        tv_shows_count = len([element for element in last_requests if element.type == "tv"])
+                        movies_count = len([element for element in last_requests if element.type == "movie"])
+                        print("TV Shows Count:", tv_shows_count)
+                        print("Movies Count:", movies_count)
                 for element in last_requests[:]:
                     if not element.id in (x.id for x in response.results):
                         last_requests.remove(element)

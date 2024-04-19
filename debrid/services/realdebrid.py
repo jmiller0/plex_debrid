@@ -179,7 +179,7 @@ def download(element, stream=True, query='', force=False):
                                     except:
                                         break
                                 release.files = version.files
-                                ui_print('[realdebrid] adding cached release: ' + release.title)
+                                ui_print('[realdebrid] adding cached release: ' + release.title + 'Actual Title: ' + actual_title)
                                 if not actual_title == "":
                                     release.title = actual_title
                                 return True
