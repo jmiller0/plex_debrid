@@ -1183,12 +1183,13 @@ class media:
         # set anime info before episodes are removed
         self.isanime()
         if self.type == 'movie':
-            ui_print(f"[content] Processing {self.title} {imdbID}", debug=ui_settings.debug)
+            
             if (len(self.uncollected(library)) > 0 or self.version_missing()) and len(self.versions()) > 0:
                 if self.released() and not self.watched() and not self.downloading():
                     if not hasattr(self, "year") or self.year == None:
                         ui_print("error: media item has no release year.")
                         return
+                    ui_print(f"[content] Processing {self.title} {imdbID} Library:{self.uncollected(library)} Missing:{self.version_missing()} Versions:{self.versions()} Released:{self.released()} Watched:{self.watched()} Downloading:{self.downloading()}", debug=ui_settings.debug)
                     tic = time.perf_counter()
                     alternate_years = [self.year, self.year - 1, self.year + 1]
                     langs = []

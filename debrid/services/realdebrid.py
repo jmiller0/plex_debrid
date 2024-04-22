@@ -154,7 +154,7 @@ def download(element, stream=True, query='', force=False):
                             if check_exists(torrent_id, id_dict):
                                 ui_print(f"[realdebrid] torrent with id {torrent_id} exists", debug=ui_settings.debug)
                                 continue
-                            
+
                             response = post('https://api.real-debrid.com/rest/1.0/torrents/selectFiles/' + torrent_id,{'files': str(','.join(cached_ids))})
                             response = get('https://api.real-debrid.com/rest/1.0/torrents/info/' + torrent_id)
                             actual_title = ""
@@ -258,14 +258,21 @@ def user():
             ui_print(f"{key}: {value}")
 
 def create_id_dict():
-    url = 'https://api.real-debrid.com/rest/1.0/torrents'
-    response = get(url)
     id_dict = {}
-    if response:
-        for torrent in response:
-            id_dict[torrent.id] = torrent
-    else:
-        ui_print("[realdebrid] error: Unable to fetch torrents.")
+    limit = 2500
+    max_pages = 4  # 4 pages * 2500 results per page = 10,000 results
+
+    for page in range(1, max_pages + 1):
+        url = f'https://api.real-debrid.com/rest/1.0/torrents?page={page}&limit={limit}'
+        response = get(url)
+
+        if response:
+            for torrent in response:
+                id_dict[torrent.id] = torrent
+        else:
+            ui_print("[realdebrid] error: Unable to fetch torrents.")
+            break  # stop fetching if there's an error
+
     ui_print(f"[realdebrid] Found {len(id_dict)} torrents", debug=ui_settings.debug)
     return id_dict
 
