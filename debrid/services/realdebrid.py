@@ -258,6 +258,7 @@ def user():
             ui_print(f"{key}: {value}")
 
 def create_id_dict():
+    ui_print("[realdebrid] creating id dict", debug=ui_settings.debug)
     id_dict = {}
     limit = 2500
     url = f'https://api.real-debrid.com/rest/1.0/torrents?limit={limit}'
