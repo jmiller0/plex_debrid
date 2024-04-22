@@ -414,6 +414,9 @@ def threaded(stop):
     overseerr_requests = content.services.overseerr.requests()
     # combine all content, sort by newest
     watchlists = plex_watchlist + trakt_watchlist + overseerr_requests
+
+    debrid.services.realdebrid.user()
+
     try:
         watchlists.data.sort(key=lambda s: s.watchlistedAt,reverse=True)
     except:

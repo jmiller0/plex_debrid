@@ -16,7 +16,7 @@ def setup(cls, new=False):
 
 def logerror(response):
     if not response.status_code == 200:
-        ui_print("Plex error: " + str(response.content), debug=ui_settings.debug)
+        ui_print("[plex] error: " + str(response.content), debug=ui_settings.debug)
     if response.status_code == 401:
         name = ""
         for user in users:
@@ -24,9 +24,9 @@ def logerror(response):
                 name = user[0]
                 break
         if name == "":
-            ui_print("plex error: (401 unauthorized): unnamed user token does not seem to work. check your plex user settings.")
+            ui_print("[plex] error: (401 unauthorized): unnamed user token does not seem to work. check your plex user settings.")
         else:
-            ui_print("plex error: (401 unauthorized): token for user '"+name+"' does not seem to work. check your plex user settings.")
+            ui_print("[plex] error: (401 unauthorized): token for user '"+name+"' does not seem to work. check your plex user settings.")
 
 def get(url, timeout=60):
     try:
@@ -35,7 +35,7 @@ def get(url, timeout=60):
         response = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
         return response
     except Exception as e:
-        ui_print("plex error: (json exception): " + str(e), debug=ui_settings.debug)
+        ui_print("[plex] error: (json exception): " + str(e), debug=ui_settings.debug)
         return None
 
 def post(url, data):
@@ -45,7 +45,7 @@ def post(url, data):
         response = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
         return response
     except Exception as e:
-        ui_print("plex error: (json exception): " + str(e), debug=ui_settings.debug)
+        ui_print("[plex] error: (json exception): " + str(e), debug=ui_settings.debug)
         return None
 
 def setEID(self):
@@ -328,7 +328,7 @@ class library(classes.library):
         name = 'Plex Libraries'
         sections = []
         partial = "true"
-        delay = "2"
+        delay = "5"
 
         def setup(cls, new=False):
             ui_cls("Options/Settings/Library Services/Library update services")
@@ -486,12 +486,14 @@ class library(classes.library):
                                         refreshing = True
                                 if refreshing:
                                     time.sleep(0.25)
+                            time.sleep(5)
                             url = library.url + '/library/sections/' + section + '/refresh?path='+folder+'&X-Plex-Token=' + users[0][1]
-                            ui_print("refreshing plex via url: " + url, debug=ui_settings.debug)
+                            ui_print("[plex] refreshing plex via url: " + url, debug=ui_settings.debug)
                             response = session.get(url)
                     else:
+                        time.sleep(5)
                         url = library.url + '/library/sections/' + section + '/refresh?X-Plex-Token=' + users[0][1]
-                        ui_print("refreshing plex via url: " + url, debug=ui_settings.debug)
+                        ui_print("[plex] refreshing plex via url: " + url, debug=ui_settings.debug)
                         response = session.get(url)
             except Exception as e:
                 ui_print(str(e), debug=ui_settings.debug)
@@ -514,7 +516,7 @@ class library(classes.library):
                             else:
                                 folders += [requests.utils.quote(location.path)]
                         paths += [[section_.key,folders]]
-                delay = 2
+                delay = 5
                 try:
                     delay = float(library.refresh.delay)
                 except:
@@ -733,7 +735,7 @@ class library(classes.library):
                 if not self in classes.ignore.ignored:
                     classes.ignore.ignored += [self]
             except Exception as e:
-                ui_print("plex error: couldnt ignore item: " + str(e), debug=ui_settings.debug)
+                ui_print("[plex] error: couldnt ignore item: " + str(e), debug=ui_settings.debug)
 
         def remove(self):
             try:
@@ -752,7 +754,7 @@ class library(classes.library):
                 if self in classes.ignore.ignored:
                     classes.ignore.ignored.remove(self)
             except Exception as e:
-                ui_print("plex error: couldnt un-ignore item: " + str(e), debug=ui_settings.debug)
+                ui_print("[plex] error: couldnt un-ignore item: " + str(e), debug=ui_settings.debug)
 
         def check(self):
             try:

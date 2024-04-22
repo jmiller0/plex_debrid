@@ -179,7 +179,7 @@ def download(element, stream=True, query='', force=False):
                                     except:
                                         break
                                 release.files = version.files
-                                ui_print('[realdebrid] adding cached release: ' + release.title + 'Actual Title: ' + actual_title)
+                                ui_print(f'[realdebrid] adding cached release:{release.title}|{actual_title}|{torrent_id}')
                                 if not actual_title == "":
                                     release.title = actual_title
                                 return True
@@ -242,4 +242,16 @@ def check(element, force=False):
                         release.size = release.files[0].size
                         release.cached += ['RD']
                         continue
-        ui_print("done",ui_settings.debug)
+        ui_print(f"done Releases: {len(element.Releases)} Cached: {len(release.cached)}",ui_settings.debug)
+
+def user():
+    url = "https://api.real-debrid.com/rest/1.0/user"
+    response = get(url)
+    if response:
+        for key, value in vars(response).items():
+            ui_print(f"{key}: {value}")
+    
+
+if __name__ == "__main__":
+    user()
+
