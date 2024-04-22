@@ -260,18 +260,29 @@ def user():
 def create_id_dict():
     id_dict = {}
     limit = 2500
-    max_pages = 4  # 4 pages * 2500 results per page = 10,000 results
+    url = f'https://api.real-debrid.com/rest/1.0/torrents?limit={limit}'
+    response = get(url)
 
-    for page in range(1, max_pages + 1):
-        url = f'https://api.real-debrid.com/rest/1.0/torrents?page={page}&limit={limit}'
-        response = get(url)
+    if response:
+        total_count = int(response.headers.get('X-Total-Count', 0))
+        max_pages = (total_count // limit) + (1 if total_count % limit > 0 else 0)
 
-        if response:
-            for torrent in response:
-                id_dict[torrent.id] = torrent
-        else:
-            ui_print("[realdebrid] error: Unable to fetch torrents.")
-            break  # stop fetching if there's an error
+        for torrent in response:
+            id_dict[torrent.id] = torrent
+
+        for page in range(2, max_pages + 1):  # start from 2 because we already fetched the first page
+            url = f'https://api.real-debrid.com/rest/1.0/torrents?page={page}&limit={limit}'
+            response = get(url)
+
+            if response:
+                for torrent in response:
+                    id_dict[torrent.id] = torrent
+            else:
+                ui_print("[realdebrid] error: Unable to fetch torrents.")
+                break  # stop fetching if there's an error
+
+    else:
+        ui_print("[realdebrid] error: Unable to fetch torrents.")
 
     ui_print(f"[realdebrid] Found {len(id_dict)} torrents", debug=ui_settings.debug)
     return id_dict

@@ -1189,7 +1189,7 @@ class media:
                     if not hasattr(self, "year") or self.year == None:
                         ui_print("error: media item has no release year.")
                         return
-                    ui_print(f"[content] Processing {self.title} {imdbID} Library:{self.uncollected(library)} Missing:{self.version_missing()} Versions:{self.versions()} Released:{self.released()} Watched:{self.watched()} Downloading:{self.downloading()}", debug=ui_settings.debug)
+                    ui_print(f"[content] Processing {self.title} {imdbID} Library:{len(self.uncollected(library))} Missing:{self.version_missing()} Versions:{len(self.versions())} Released:{self.released()} Watched:{self.watched()} Downloading:{self.downloading()}", debug=ui_settings.debug)
                     tic = time.perf_counter()
                     alternate_years = [self.year, self.year - 1, self.year + 1]
                     langs = []
