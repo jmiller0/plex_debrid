@@ -121,6 +121,7 @@ class version:
 # (required) Download Function.
 def download(element, stream=True, query='', force=False):
     cached = element.Releases
+    id_dict = create_id_dict()
     if query == '':
         query = element.deviation()
     wanted = [query]
@@ -149,6 +150,11 @@ def download(element, stream=True, query='', force=False):
                             except:
                                 ui_print('[realdebrid] error: could not add magnet for release: ' + release.title, ui_settings.debug)
                                 continue
+
+                            if check_exists(torrent_id, id_dict):
+                                ui_print(f"[realdebrid] torrent with id {torrent_id} exists", debug=ui_settings.debug)
+                                continue
+                            
                             response = post('https://api.real-debrid.com/rest/1.0/torrents/selectFiles/' + torrent_id,{'files': str(','.join(cached_ids))})
                             response = get('https://api.real-debrid.com/rest/1.0/torrents/info/' + torrent_id)
                             actual_title = ""
@@ -250,7 +256,26 @@ def user():
     if response:
         for key, value in vars(response).items():
             ui_print(f"{key}: {value}")
-    
+
+def create_id_dict():
+    url = 'https://api.real-debrid.com/rest/1.0/torrents'
+    response = get(url)
+    id_dict = {}
+    if response:
+        for torrent in response:
+            id_dict[torrent.id] = torrent
+    else:
+        ui_print("[realdebrid] error: Unable to fetch torrents.")
+    ui_print(f"[realdebrid] Found {len(id_dict)} torrents", debug=ui_settings.debug)
+    return id_dict
+
+def check_exists(torrent_id, id_dict):
+    if torrent_id in id_dict:
+        ui_print(f"[realdebrid] Torrent with id {torrent_id} exists: {id_dict[torrent_id]}")
+        return True
+    else:
+        ui_print(f"[realdebrid] Torrent with id {torrent_id} does not exist.")
+        return False
 
 if __name__ == "__main__":
     user()
