@@ -75,142 +75,8 @@ If github is not your cup of tea;
  
 ## Setup:
 
-### :pushpin: Step by Step and VPS Guides:
-
-*Aside from this general setup guide, here some step-by-step guides with specific examples for a few different operating systems. If you want to run plex_debrid on a VPS or Seedbox, please keep in mind that some debrid services block such IP addresses from accessing their servers.*
-
-><details>
->  <summary><b><u>Step by Step for your OS:</u></b></summary>
->  
->  - **[Docker (Wiki)](https://github.com/itsToggle/plex_debrid/wiki/Setup-Guides#docker-setup)**
->  - **[Windows (Wiki)](https://github.com/itsToggle/plex_debrid/wiki/Setup-Guides#windows-setup)**
->  - **[Linux Server (Wiki)](https://github.com/itsToggle/plex_debrid/wiki/Setup-Guides#linux-server-setup)**
->  - **[Linux ARM Server (Wiki)](https://github.com/itsToggle/plex_debrid/wiki/Setup-Guides#linux-arm64-server-setup)**
->  - **[FreeBSD (u/TheNicestRichtofen)](https://www.reddit.com/r/Piracy/comments/v5zpj7/comment/ibnikqh/?utm_source=share&utm_medium=web2x&context=3)**
->  - **[Android (Nvidia Shield)](https://github.com/itsToggle/plex_debrid/wiki/Setup-Guides#android-nvidia-shield-setup)**
-></details>
->
-><details>
->  <summary><b><u>Help for a VPS/Seedbox Setup</u></b></summary>
->  
->  - **I do not encourage you to disregard your debrid services code of conduct.**
->  - Debrid services like realdebrid block common VPS or Seedbox IP addresses. They do however have a list of whitelisted VPNs, behind which you can run your server. >For realdebrid you can find this list on https://real-debrid.com/vpn . You can also use this address to check wether or not your servers IP is blocked by running the >commands `curl -4 https://real-debrid.com/vpn | grep blocked` and `curl -6 https://real-debrid.com/vpn | grep blocked`. If you have the option, you can try to request >a different IP address from your VPS provider, preferably your own personal IPv4 address which will most likely not be blocked.
-></details>
->
-
  
-### 1) :open_file_folder: Mount your debrid services:
-
-*For this download automation to work, you need to mount at least one debrid service as a virtual drive. I highly recommend using RealDebrid, as this service will recieve updates and new features from plex_debrid first. Please keep in mind that most debrid services dont allow you to access their service from multiple IP addresses in parallel. This is not an issue if you have a Plex server running, since everything you stream through plex (from any location, no matter how many in parallel) is routed through your servers IP address. While you have your plex server running though, you should not download from your debrid service in any other way than through plex.*
-
->
-><details>
->  <summary><b><u><img src="https://fcdn.real-debrid.com/0818/favicons/favicon.ico" height="16"> Mounting RealDebrid</u></b></summary>
->  
->  Realdebrid has now implement support for WebDav, which makes it mountable with official rclone software.
->  
->  I do still recomend using my forked version of rclone thats written explicitly for realdebrid, since realdebrids WebDav does not allow for torrent file deletion through rclone and they limit the amount of torrents displayed to 200. They do claim the torrent file deletion works with other webdav mount programs, but i have not been able to test this yet. It also seems that the official realdebrid webdav is still slower and more bandwidth heavy than my rclone fork, because mounting the webdav leads to frequent re-discovering of already downloaded content. 
->  
->  **Mounting with my rclone fork:**
->  
->  1. Install my rclone fork: https://github.com/itsToggle/rclone_rd
->  2. configure rclone by running the command 'rclone config' (could be './rclone config' and depending on your os, the filename could be './rclone-linux' or similar. If you get a permission denied error (linux & macos), run 'sudo chmod u+x rclone-linux', adjusted to the filename.)
->  3. create a new remote by typing 'n'
->  4. give your remote a name (e.g. 'your-remote')
->  5. choose '47) realdebrid' as your remote type
->  6. follow the rest of the prompted instructions, choose 'no advaced configuration'
->  7. You can mount your newly created remote by running the command 'rclone cmount your-remote: X: --dir-cache-time 10s' (replace 'your-remote' with your remote name, replace 'X' with a drive letter of your choice or replace 'X:' with a destination folder)
->  8. If you are running my rclone fork on Linux, replace "cmount" with "mount" in the command above.
->  9. You've successfuly created a virtual drive of your debrid service!
->  
->  *You can run rclone as a background service by adding the mounting tag '--no-console' (Windows) or '--deamon' (Linux, Mac, etc).*
-> 
->  **Mounting with official rclone software (WebDav)**
->  
->  1. Install the official rclone software: https://github.com/rclone/rclone or my fork: https://github.com/itsToggle/rclone_rd
->  2. configure rclone by running the command 'rclone config' (could be './rclone config' depending on your os)
->  3. create a new remote by typing 'n'
->  4. give your remote a name (e.g. 'your-remote')
->  5. choose '45) WebDav' as your remote type
->  6. enter 'https://dav.real-debrid.com/' as the server url
->  7. choose option '5) (other)'
->  8. enter your realdebrid user name as your user name
->  9. choose option 'y) yes, enter in my own password'
->  10. enter your webdav password (available in your account settings) as the password
->  11. You can mount your newly created remote by running the command 'rclone mount your-remote:torrents X: --dir-cache-time 10s' (replace 'your-remote' with your remote name, replace X with a drive letter of your choice or replace 'X:' with a destination folder)
->  12. You've successfuly created a virtual drive of your debrid service!
-> 
->  *You can run rclone as a background service by adding the mounting tag '--no-console' (Windows) or '--deamon' (Linux, Mac, etc)*
-></details>
->
-><details>
->  <summary><b><u><img src="https://www.premiumize.me/favicon-16x16.png" height="16"> Mounting Premiumize</u></b></summary>
->  
->  1. Install the official rclone software: https://github.com/rclone/rclone or my fork: https://github.com/itsToggle/rclone_rd
->  2. configure rclone by running the command 'rclone config' (could be './rclone config' depending on your os)
->  3. create a new remote by typing 'n'
->  4. give your remote a name (e.g. 'your-remote')
->  5. choose '46) premiumize' as your remote type
->  6. follow the rest of the prompted instructions, choose 'no advaced configuration'
->  7. You can mount your newly created remote by running the command 'rclone mount your-remote: X: --dir-cache-time 10s' (replace 'your-remote' with your remote name, replace X with a drive letter of your choice or replace 'X:' with a destination folder)
->  8. You've successfuly created a virtual drive of your debrid service!
->  
->  *You can run rclone as a background service by adding the mounting tag '--no-console' (Windows) or '--deamon' (Linux, Mac, etc)*
-></details>
->
-><details>
->  <summary><b><u><img src="https://cdn.alldebrid.com/lib/images/default/favicon.png" height="16"> Mounting AllDebrid</u></b></summary>
->  
->  1. Install the official rclone software: https://github.com/rclone/rclone or my fork: https://github.com/itsToggle/rclone_rd
->  2. configure rclone by running the command 'rclone config' (could be './rclone config' depending on your os)
->  3. create a new remote by typing 'n'
->  4. give your remote a name (e.g. 'your-remote')
->  5. choose '42) WebDav' as your remote type
->  6. enter 'https://alldebrid.com/webdav/' as the server url
->  7. choose option '5) (other)'
->  8. enter an api key as your user name
->  9. choose option 'y) yes, enter in my own password'
->  10. enter 'eeeee' as the password
->  11. You can mount your newly created remote by running the command 'rclone mount your-remote:links X: --dir-cache-time 10s' (replace 'your-remote' with your remote name, replace X with a drive letter of your choice or replace 'X:' with a destination folder)
->  12. You've successfuly created a virtual drive of your debrid service!
->  13. You will only be able to watch content from the "links" and "history" folder, not the "magnet" folder. The "links" folder is recommended and the one used in the mounting command above.
->  
->  *You can run rclone as a background service by adding the mounting tag '--no-console' (Windows) or '--deamon' (Linux, Mac, etc)*
-></details>
->
-><details>
->  <summary><b><u><img src="https://cdn.debrid-link.com/favicon.ico?i=2" height="16"> Mounting DebridLink</u></b></summary>
->  
->  1. Install the official rclone software: https://github.com/rclone/rclone or my fork: https://github.com/itsToggle/rclone_rd
->  2. configure rclone by running the command 'rclone config' (could be './rclone config' depending on your os)
->  3. create a new remote by typing 'n'
->  4. give your remote a name (e.g. 'your-remote')
->  5. choose '42) WebDav' as your remote type
->  6. enter 'https://webdav.debrid.link' as the server url
->  7. choose option '5) (other)'
->  8. enter your debrid-link user name as your user name
->  9. choose option 'y) yes, enter in my own password'
->  10. enter your "passkey" (Available in your account) as the password
->  11. You can mount your newly created remote by running the command 'rclone mount your-remote X: --dir-cache-time 10s' (replace 'your-remote' with your remote name, replace X with a drive letter of your choice or replace 'X:' with a destination folder)
->  12. You've successfuly created a virtual drive of your debrid service!
->  
->  *You can run rclone as a background service by adding the mounting tag '--no-console' (Windows) or '--deamon' (Linux, Mac, etc)*
-></details>
->
-><details>
->  <summary><b><u><img src="https://app.put.io/assets/favicon-32x32.png" height="16"> Mounting PUT.io</u></b></summary>
->  
->  Here is a nicely written article from the put.io team on how to mount put.io using rclone:
->  
->  http://help.put.io/en/articles/3480094-plex-rclone
->  
->You can mount your newly created remote by running the command 'rclone mount your-remote X: --dir-cache-time 10s' (replace 'your-remote' with your remote name, replace X with a drive letter of your choice or replace 'X:' with a destination folder)
->  
->  *You can run rclone as a background service by adding the mounting tag '--no-console' (Windows) or '--deamon' (Linux, Mac, etc)*
-></details>
-
- 
-### 2) :tv: Setup your personal media server:
+### 1) :tv: Setup your personal media server:
 
 *To stream content from your newly mounted virtual drive, its recommended to set up a personal media server like plex, emby or jellyfin. These services allow you to stream your content from outside your local network. You will have the best expirience when using plex, since you dont need any 3rd party website to download new content - you can simply add new movies/shows to your watchlist from inside any plex client app, wait a few seconds and then watch it (see the gif above). If you prefer emby or jellyfin as your personal media server, the only way to add new content is via trakt and jellyseerr. A different approach is to use media players like Infuse to access the mounted files, which too relies on trakt to add new content.*
 
@@ -230,33 +96,13 @@ If github is not your cup of tea;
  
 ### 3) :page_facing_up: Setup plex_debrid:
 
-*The plex_debrid script can be run as a docker container (dockerized version) or by simply executing it with python 3 (standard version).*
-
-><details>
->  <summary><b><u>Standard Version:</u></b></summary>
->  
->  0. Clone this repository with git or click on "code" (top right) and then "download zip" 
->  1. Open a terminal inside the downloaded plex_debrid-main folder. Run `pip install -r requirements.txt` - if you dont have pip yet, install it from https://pypi.org/project/pip/
->  2. Start the script by running `python ./main.py`
->  3. The script will guide you through the initial setup and the next steps. When setting up plex_debrid, you will be prompted to choose the 5 main services that this script connects:
->  4. Pick and setup at least one [**content service**](https://github.com/itsToggle/plex_debrid#tv-content-services) which plex_debrid should monitor for new content
->  5. Pick and setup a [**library collection service**](https://github.com/itsToggle/plex_debrid#open_file_folder-library-collection-service), which plex_debrid will use to determine your current media collection. If you intend to run a plex server, choose "Plex Libraries".
->  6. Pick and setup a [**library update service**](https://github.com/itsToggle/plex_debrid#-library-update-services), which plex_debrid will update/refresh after a successful download. If you intent to run a plex server, choose "Plex Libraries".
->  7. Pick and setup a [**library ignore service**](https://github.com/itsToggle/plex_debrid#eyes-library-ignore-services), which plex_debrid will use to ignore content. If you intent to run a plex server, choose "Plex Discover Watch Status".
->  8. Pick and setup at least one [**debrid service**](https://github.com/itsToggle/plex_debrid#arrow_down_small-debrid-services), which plex_debrid will use to download content.
->  9. You're done!
->  10. Choose option '1' to run the download automation. Choose option '2' to explore or edit the Settings or open the "settings.json" file the script creates after the first run. 
->  11. If you dont want the main menu to show when starting the script (for an auto-run setup), navigate to "/Settings/UI Settings/show menu on startup" and set the value to "false".
->  12. Read the rest of the README!
->  
-></details>
->
 ><details>
 >  <summary><b><u>Dockerized Version:</u></b></summary>
 >   
->  1. Run `docker pull itstoggle/plex_debrid`or visit https://hub.docker.com/repository/docker/itstoggle/plex_debrid.
->  2. Run `docker run -v /path/to/config:/config --net host -ti itstoggle/plex_debrid` . Where `/path/to/config` is the directory path where you want to save your plex_debrid config data.
->  3. The script will guide you through the initial setup and the next steps. When setting up plex_debrid, you will be prompted to choose the 5 main services that this script connects:
+> The easiest way to do this is create a folder called mnt at the root level. 
+
+>  1. Copy the docker-compose.yml. Edit the  from this project and run docker compose up -d.
+>  2. The script will guide you through the initial setup and the next steps. When setting up plex_debrid, you will be prompted to choose the 5 main services that this script connects:
 >  4. Pick and setup at least one [**content service**](https://github.com/itsToggle/plex_debrid#tv-content-services) which plex_debrid should monitor for new content
 >  5. Pick and setup a [**library collection service**](https://github.com/itsToggle/plex_debrid#open_file_folder-library-collection-service), which plex_debrid will use to determine your current media collection. If you intend to run a plex server, choose "Plex Libraries".
 >  6. Pick and setup a [**library update service**](https://github.com/itsToggle/plex_debrid#-library-update-services), which plex_debrid will update/refresh after a successful download. If you intent to run a plex server, choose "Plex Libraries".

@@ -1,0 +1,52 @@
+services:
+
+  zurg:
+    image: ghcr.io/debridmediamanager/zurg-testing:v0.9.3-hotfix.11
+    container_name: zurg
+    restart: unless-stopped
+    healthcheck:
+      test: curl -f localhost:9999/dav/version.txt || exit 1
+    ports:
+      - '9999:9999'
+    volumes:
+      - ./config/config.yml:/app/config.yml
+      - zurgdata:/app/data
+      - ./plex_update.sh:/app/plex_update.sh
+
+
+  rclone:
+    image: rclone/rclone:latest
+    container_name: rclone
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Berlin
+      PUID: 1000
+      PGID: 1000
+    volumes:
+      - /mnt/remote/realdebrid:/data:rshared
+      - ./config/rclone.conf:/config/rclone/rclone.conf
+      - /mnt:/mnt
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    devices:
+      - /dev/fuse:/dev/fuse:rwm
+    depends_on:
+      zurg:
+        condition: service_healthy
+        restart: true
+    command: "mount zurg: /data --allow-non-empty --allow-other --uid=1000 --gid=1000 --dir-cache-time 10s --vfs-cache-mode full"
+
+  plex_debrid:
+    image: skearney414/plex_debrid:latest
+    container_name: plex_debrid
+    restart: unless-stopped
+    volumes:
+      - ./config/plex_debrid:/config
+    depends_on:
+      - rclone
+
+volumes:
+  zurgdata:
+
