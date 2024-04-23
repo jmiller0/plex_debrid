@@ -131,6 +131,9 @@ def download(element, stream=True, query='', force=False):
     if not isinstance(element, releases.release):
         wanted = element.files()
     for release in cached[:]:
+        if check_exists(release.title, name_dict):
+            ui_print(f"[realdebrid] torrent with id {release.title} exists", debug=ui_settings.debug)
+            continue
         # if release matches query
         try:
             match = regex.match(query, release.title,regex.I) or force
@@ -150,13 +153,8 @@ def download(element, stream=True, query='', force=False):
                             try:
                                 response = post('https://api.real-debrid.com/rest/1.0/torrents/addMagnet',{'magnet': str(release.download[0])})
                                 torrent_id = str(response.id)
-                                torrent_name = str(response.filename)
                             except:
                                 ui_print('[realdebrid] error: could not add magnet for release: ' + release.title, ui_settings.debug)
-                                continue
-
-                            if check_exists(torrent_name, name_dict):
-                                ui_print(f"[realdebrid] torrent with id {torrent_name} exists", debug=ui_settings.debug)
                                 continue
 
                             response = post('https://api.real-debrid.com/rest/1.0/torrents/selectFiles/' + torrent_id,{'files': str(','.join(cached_ids))})
