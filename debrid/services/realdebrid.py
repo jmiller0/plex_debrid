@@ -124,7 +124,7 @@ class version:
 # (required) Download Function.
 def download(element, stream=True, query='', force=False):
     cached = element.Releases
-    id_dict = create_id_dict()
+    name_dict = create_name_dict()
     if query == '':
         query = element.deviation()
     wanted = [query]
@@ -150,11 +150,12 @@ def download(element, stream=True, query='', force=False):
                             try:
                                 response = post('https://api.real-debrid.com/rest/1.0/torrents/addMagnet',{'magnet': str(release.download[0])})
                                 torrent_id = str(response.id)
+                                torrent_name = str(response.filename)
                             except:
                                 ui_print('[realdebrid] error: could not add magnet for release: ' + release.title, ui_settings.debug)
                                 continue
 
-                            if check_exists(torrent_id, id_dict):
+                            if check_exists(torrent_name, name_dict):
                                 ui_print(f"[realdebrid] torrent with id {torrent_id} exists", debug=ui_settings.debug)
                                 continue
 
@@ -260,7 +261,7 @@ def user():
         for key, value in vars(response).items():
             ui_print(f"{key}: {value}")
 
-def create_id_dict():
+def create_name_dict():
     ui_print("[realdebrid] creating id dict", debug=ui_settings.debug)
     id_dict = {}
     limit = 2500
@@ -273,15 +274,17 @@ def create_id_dict():
 
         data = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
         for torrent in data:
-            id_dict[torrent.id] = torrent
+            id_dict[torrent.filename] = torrent
 
         for page in range(2, max_pages + 1):  # start from 2 because we already fetched the first page
             url = f'https://api.real-debrid.com/rest/1.0/torrents?page={page}&limit={limit}'
-            response = get(url)
+            response = get(url, return_generic_response=True)
+            data = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
+
 
             if response:
-                for torrent in response:
-                    id_dict[torrent.id] = torrent
+                for torrent in data:
+                    id_dict[torrent.filename] = torrent
             else:
                 ui_print("[realdebrid] error: Unable to fetch torrents.")
                 break  # stop fetching if there's an error
@@ -292,12 +295,12 @@ def create_id_dict():
     ui_print(f"[realdebrid] Found {len(id_dict)} torrents", debug=ui_settings.debug)
     return id_dict
 
-def check_exists(torrent_id, id_dict):
-    if torrent_id in id_dict:
-        ui_print(f"[realdebrid] Torrent with id {torrent_id} exists: {id_dict[torrent_id]}")
+def check_exists(torrent_name, name_dict):
+    if torrent_name in name_dict:
+        ui_print(f"[realdebrid] Torrent with id {torrent_name} exists: {name_dict[torrent_name]}")
         return True
     else:
-        ui_print(f"[realdebrid] Torrent with id {torrent_id} does not exist.")
+        ui_print(f"[realdebrid] Torrent with id {torrent_name} does not exist.")
         return False
 
 if __name__ == "__main__":
@@ -307,5 +310,6 @@ if __name__ == "__main__":
     if not api_key:
         api_key = os.getenv('REALDEBRID_API_KEY')
         print(f'api_key: {api_key}')
-    ids = create_id_dict()
-
+    ids = create_name_dict()
+    check = 'O.J.Made.In.America.2016.S01.1080p.BluRay.x264-MIXED[rartv]'
+    print(f'check: {check_exists(check, ids)}')
