@@ -156,7 +156,7 @@ def download(element, stream=True, query='', force=False):
                                 continue
 
                             if check_exists(torrent_name, name_dict):
-                                ui_print(f"[realdebrid] torrent with id {torrent_id} exists", debug=ui_settings.debug)
+                                ui_print(f"[realdebrid] torrent with id {torrent_name} exists", debug=ui_settings.debug)
                                 continue
 
                             response = post('https://api.real-debrid.com/rest/1.0/torrents/selectFiles/' + torrent_id,{'files': str(','.join(cached_ids))})
