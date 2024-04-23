@@ -17,6 +17,9 @@ errors = [
     [503," service unavailable (see error message)"],
     [404," wrong parameter (invalid file id(s)) / unknown ressource (invalid id)"],
     ]
+
+name_dict = ""
+
 def setup(cls, new=False):
     from debrid.services import setup
     setup(cls,new)
@@ -125,6 +128,7 @@ class version:
 def download(element, stream=True, query='', force=False):
     cached = element.Releases
     name_dict = create_name_dict()
+
     if query == '':
         query = element.deviation()
     wanted = [query]
@@ -260,6 +264,9 @@ def user():
             ui_print(f"{key}: {value}")
 
 def create_name_dict():
+    if len(name_dict) > 0:
+        return name_dict
+    
     ui_print("[realdebrid] creating id dict", debug=ui_settings.debug)
     id_dict = {}
     limit = 2500
