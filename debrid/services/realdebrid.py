@@ -35,14 +35,17 @@ def logerror(response):
         ui_print("[realdebrid] error: (403 unauthorized): You may have attempted to add an infringing torrent or your realdebrid account is locked or you dont have premium.")
 
 # Get Function
-def get(url):
+def get(url, return_generic_response=False):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36','authorization': 'Bearer ' + api_key}
     response = None
     try:
         response = session.get(url, headers=headers)
         logerror(response)
-        response = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
+        if return_generic_response:
+            return response
+        else:
+            response = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
     except Exception as e:
         ui_print("[realdebrid] error: (json exception): " + str(e), debug=ui_settings.debug)
         response = None
@@ -262,13 +265,14 @@ def create_id_dict():
     id_dict = {}
     limit = 2500
     url = f'https://api.real-debrid.com/rest/1.0/torrents?limit={limit}'
-    response = get(url)
+    response = get(url, return_generic_response=True)
 
     if response:
         total_count = int(response.headers.get('X-Total-Count', 0))
         max_pages = (total_count // limit) + (1 if total_count % limit > 0 else 0)
 
-        for torrent in response:
+        data = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
+        for torrent in data:
             id_dict[torrent.id] = torrent
 
         for page in range(2, max_pages + 1):  # start from 2 because we already fetched the first page
@@ -298,4 +302,10 @@ def check_exists(torrent_id, id_dict):
 
 if __name__ == "__main__":
     user()
+
+if __name__ == "__main__":
+    if not api_key:
+        api_key = os.getenv('REALDEBRID_API_KEY')
+        print(f'api_key: {api_key}')
+    ids = create_id_dict()
 
