@@ -127,7 +127,7 @@ class version:
 # (required) Download Function.
 def download(element, stream=True, query='', force=False):
     cached = element.Releases
-    name_dict = create_name_dict()
+    name_dict = create_name_dict(name_dict)
 
     if query == '':
         query = element.deviation()
@@ -137,7 +137,7 @@ def download(element, stream=True, query='', force=False):
     for release in cached[:]:
         if check_exists(release.title, name_dict):
             ui_print(f"[realdebrid] torrent with id {release.title} exists", debug=ui_settings.debug)
-            continue
+            return False
         # if release matches query
         try:
             match = regex.match(query, release.title,regex.I) or force
@@ -263,7 +263,7 @@ def user():
         for key, value in vars(response).items():
             ui_print(f"{key}: {value}")
 
-def create_name_dict():
+def create_name_dict(name_dict):
     if len(name_dict) > 0:
         return name_dict
     
