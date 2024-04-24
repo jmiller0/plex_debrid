@@ -328,7 +328,7 @@ class media:
                 except:
                     query = "unknown"
             if not service == "content.services.textfile":
-                ui_print(f"[content] matching {self.type} item: {query} of service {self.__module__} to service {service}", ui_settings.debug)
+                ui_print(f"[content] matching trakt: {self.ids.slug} {self.type} item: {query} of service {self.__module__} to service {service}", ui_settings.debug)
             match = sys.modules[service].match(self)
             if match == None:
                 return False
@@ -1188,7 +1188,7 @@ class media:
                     if not hasattr(self, "year") or self.year == None:
                         ui_print("error: media item has no release year.")
                         return
-                    ui_print(f"[content] Processing {self.type} {self.__module__} {self.title} {EIDS} {imdbID} Library:{len(self.uncollected(library))} Missing:{self.version_missing()} Versions:{len(self.versions())} Released:{self.released()} Watched:{self.watched()} Downloading:{self.downloading()}", debug=ui_settings.debug)
+                    ui_print(f"[content] Processing {self.type} {self.__module__} {self.title} {EID} {EIDS} {imdbID} Library:{len(self.uncollected(library))} Missing:{self.version_missing()} Versions:{len(self.versions())} Released:{self.released()} Watched:{self.watched()} Downloading:{self.downloading()}", debug=ui_settings.debug)
                     tic = time.perf_counter()
                     alternate_years = [self.year, self.year - 1, self.year + 1]
                     langs = []

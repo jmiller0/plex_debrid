@@ -1027,6 +1027,7 @@ class library(classes.library):
                     return False
                 current_user = user
                 history = library.ignore.history()
+                ui_print(f"[trakt] Checking if movie {self.title} is ignored... http://trakt.tv/movie/{self.guid}")
                 if self.type == "movie":
                     if self in history:
                         if not self in  classes.ignore.ignored:
@@ -1104,6 +1105,7 @@ class library(classes.library):
                         element.movie.EID = setEID(element.movie)
                         history.append(classes.media(element.movie))
                 library.ignore.watched = history
+                ui_print("[trakt] successfully checked ignore status for " + str(len(history)) + " items", debug=ui_settings.debug)
                 return history
             except Exception as e:
                 ui_print("[trakt] error: couldnt check ignore status for item: " + str(e), debug=ui_settings.debug)

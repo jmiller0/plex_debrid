@@ -8,6 +8,7 @@ name = "Real Debrid"
 short = "RD"
 # (required) Authentification of the Debrid service, can be oauth aswell. Create a setting for the required variables in the ui.settings_list. For an oauth example check the trakt authentification.
 api_key = ""
+name_dict = {}
 # Define Variables
 session = requests.Session()
 errors = [
@@ -17,8 +18,6 @@ errors = [
     [503," service unavailable (see error message)"],
     [404," wrong parameter (invalid file id(s)) / unknown ressource (invalid id)"],
     ]
-
-name_dict = ""
 
 def setup(cls, new=False):
     from debrid.services import setup
@@ -74,10 +73,13 @@ def post(url, data):
 
 # Delete Function
 def delete(url):
+    ui_print(f"[realdebrid] delete: {url}")
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36','authorization': 'Bearer ' + api_key}
     try:
-        requests.delete(url, headers=headers)
-        # time.sleep(1)
+        response = requests.delete(url, headers=headers)
+        if response.status_code != 204:
+                ui_print("[realdebrid] error: (delete status code): " + str(response.status_code), debug=ui_settings.debug)
+        time.sleep(1)
     except Exception as e:
         ui_print("[realdebrid] error: (delete exception): " + str(e), debug=ui_settings.debug)
         None
@@ -127,7 +129,6 @@ class version:
 # (required) Download Function.
 def download(element, stream=True, query='', force=False):
     cached = element.Releases
-    name_dict = create_name_dict(name_dict)
 
     if query == '':
         query = element.deviation()
@@ -135,9 +136,6 @@ def download(element, stream=True, query='', force=False):
     if not isinstance(element, releases.release):
         wanted = element.files()
     for release in cached[:]:
-        if check_exists(release.title, name_dict):
-            ui_print(f"[realdebrid] torrent with id {release.title} exists", debug=ui_settings.debug)
-            return False
         # if release matches query
         try:
             match = regex.match(query, release.title,regex.I) or force
@@ -145,6 +143,9 @@ def download(element, stream=True, query='', force=False):
             ui_print('[realdebrid] error: could not match query: ' + query + ' for release: ' + release.title, ui_settings.debug)
             match = False
         if match:
+            # if check_exists(match.string):
+            #     ui_print(f"[realdebrid] torrent with id {match.string} exists")
+            #     return False
             if stream:
                 release.size = 0
                 for version in release.files:
@@ -263,15 +264,25 @@ def user():
         for key, value in vars(response).items():
             ui_print(f"{key}: {value}")
 
-def create_name_dict(name_dict):
-    if len(name_dict) > 0:
-        return name_dict
+
+def get_basename(filename):
+    basename = os.path.basename(filename)
+    name, extension = os.path.splitext(basename)
+    if extension in ['.mkv', '.mp4', '.avi']:
+        return name
+    else:
+        return filename
+
+def create_name_dict():
+    global name_dict
     
-    ui_print("[realdebrid] creating id dict", debug=ui_settings.debug)
-    id_dict = {}
+    ui_print("[realdebrid] creating name_dict", debug=ui_settings.debug)
+    name_dict = {}
     limit = 2500
     url = f'https://api.real-debrid.com/rest/1.0/torrents?limit={limit}'
     response = get(url, return_generic_response=True)
+    ids=set()
+    dupe_names={}
 
     if response:
         total_count = int(response.headers.get('X-Total-Count', 0))
@@ -279,7 +290,11 @@ def create_name_dict(name_dict):
 
         data = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
         for torrent in data:
-            id_dict[torrent.filename] = torrent
+            name = get_basename(torrent.filename)
+            if torrent.filename in name_dict:
+                dupe_names[torrent.id] = name
+            name_dict[name] = torrent
+            ids.add(torrent.id)
 
         for page in range(2, max_pages + 1):  # start from 2 because we already fetched the first page
             url = f'https://api.real-debrid.com/rest/1.0/torrents?page={page}&limit={limit}'
@@ -289,7 +304,11 @@ def create_name_dict(name_dict):
 
             if response:
                 for torrent in data:
-                    id_dict[torrent.filename] = torrent
+                    name = get_basename(torrent.filename)
+                    if torrent.filename in name_dict:
+                        dupe_names[torrent.id] = name
+                    name_dict[name] = torrent
+                    ids.add(torrent.id)
             else:
                 ui_print("[realdebrid] error: Unable to fetch torrents.")
                 break  # stop fetching if there's an error
@@ -297,24 +316,29 @@ def create_name_dict(name_dict):
     else:
         ui_print("[realdebrid] error: Unable to fetch torrents.")
 
-    ui_print(f"[realdebrid] Found {len(id_dict)} torrents", debug=ui_settings.debug)
-    return id_dict
+    ui_print(f"[realdebrid] Found {len(name_dict)} Titles, {len(ids)} Torrents")
+    ui_print(f"[realdebrid] Found {len(dupe_names)} Duplicate Titles")
+    #print Titles and ids:
+    for n,i in dupe_names.items():
+            ui_print(f"[realdebrid] Duplicate Title: {n}: {i}")
+            #delete('https://api.real-debrid.com/rest/1.0/torrents/delete/' + n)
+    return name_dict
 
-def check_exists(torrent_name, name_dict):
-    if torrent_name in name_dict:
-        ui_print(f"[realdebrid] Torrent with id {torrent_name} exists: {name_dict[torrent_name]}")
+def check_exists(torrent_name):
+    name = get_basename(torrent_name)
+    if get_basename(name) in name_dict:
+        ui_print(f"[realdebrid] Torrent with name {name} exists: {name_dict[name]} Checked {len(name_dict)} names.")
         return True
     else:
-        ui_print(f"[realdebrid] Torrent with id {torrent_name} does not exist.")
+        ui_print(f"[realdebrid] Torrent with name {name} does not exist. Checked {len(name_dict)} names.")
         return False
 
-if __name__ == "__main__":
-    user()
 
 if __name__ == "__main__":
     if not api_key:
         api_key = os.getenv('REALDEBRID_API_KEY')
         print(f'api_key: {api_key}')
-    ids = create_name_dict()
-    check = 'O.J.Made.In.America.2016.S01.1080p.BluRay.x264-MIXED[rartv]'
-    print(f'check: {check_exists(check, ids)}')
+    user()
+    create_name_dict()
+    check = 'Voyeur.2017.1080p.Netflix.WEB-DL.DD5.1.x264-QOQ'
+    print(f'check: {check_exists(check)}')

@@ -878,8 +878,10 @@ class library(classes.library):
                             episode.grandparentEID = item.EID
             except:
                 ui_print('done')
-                ui_print("[plex error]: found incorrectly matched library item : " + item.title + " - this item needs a metadata refresh (open plex webui, find item, open item menu, refresh metadata).")  
-        ui_print('done')
+                ui_print("[plex error]: found incorrectly matched library item : " + item.title + " - this item needs a metadata refresh (open plex webui, find item, open item menu, refresh metadata).")
+        movies = [item for item in list_ if item.type == "movie"]
+        shows = [item for item in list_ if item.type == "show"]
+        ui_print(f'done found {len(list_)} items in library {self.name} Movies: {len(movies)} Shows: {len(shows)}')
         current_library = copy.deepcopy(list_)
         if first_load and updated:
             store.save(current_library,"plex","metadata")       
