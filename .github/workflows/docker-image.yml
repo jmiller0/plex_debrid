@@ -49,4 +49,3 @@ jobs:
             ${{ secrets.DOCKER_HUB_USERNAME }}/plex_debrid:latest
             ${{ secrets.DOCKER_HUB_USERNAME }}/plex_debrid:${{ steps.extract_branch.outputs.branch }}
             ${{ secrets.DOCKER_HUB_USERNAME }}/plex_debrid:${{ steps.vars.outputs.sha_short }}
-            
