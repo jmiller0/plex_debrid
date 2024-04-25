@@ -8,6 +8,7 @@ name = "Real Debrid"
 short = "RD"
 # (required) Authentification of the Debrid service, can be oauth aswell. Create a setting for the required variables in the ui.settings_list. For an oauth example check the trakt authentification.
 api_key = ""
+name_dict = {}
 # Define Variables
 session = requests.Session()
 errors = [
@@ -17,6 +18,7 @@ errors = [
     [503," service unavailable (see error message)"],
     [404," wrong parameter (invalid file id(s)) / unknown ressource (invalid id)"],
     ]
+
 def setup(cls, new=False):
     from debrid.services import setup
     setup(cls,new)
@@ -35,14 +37,17 @@ def logerror(response):
         ui_print("[realdebrid] error: (403 unauthorized): You may have attempted to add an infringing torrent or your realdebrid account is locked or you dont have premium.")
 
 # Get Function
-def get(url):
+def get(url, return_generic_response=False):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36','authorization': 'Bearer ' + api_key}
     response = None
     try:
         response = session.get(url, headers=headers)
         logerror(response)
-        response = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
+        if return_generic_response:
+            return response
+        else:
+            response = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
     except Exception as e:
         ui_print("[realdebrid] error: (json exception): " + str(e), debug=ui_settings.debug)
         response = None
@@ -68,10 +73,13 @@ def post(url, data):
 
 # Delete Function
 def delete(url):
+    ui_print(f"[realdebrid] delete: {url}")
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36','authorization': 'Bearer ' + api_key}
     try:
-        requests.delete(url, headers=headers)
-        # time.sleep(1)
+        response = requests.delete(url, headers=headers)
+        if response.status_code != 204:
+                ui_print("[realdebrid] error: (delete status code): " + str(response.status_code), debug=ui_settings.debug)
+        time.sleep(1)
     except Exception as e:
         ui_print("[realdebrid] error: (delete exception): " + str(e), debug=ui_settings.debug)
         None
@@ -121,6 +129,7 @@ class version:
 # (required) Download Function.
 def download(element, stream=True, query='', force=False):
     cached = element.Releases
+
     if query == '':
         query = element.deviation()
     wanted = [query]
@@ -134,6 +143,9 @@ def download(element, stream=True, query='', force=False):
             ui_print('[realdebrid] error: could not match query: ' + query + ' for release: ' + release.title, ui_settings.debug)
             match = False
         if match:
+            # if check_exists(match.string):
+            #     ui_print(f"[realdebrid] torrent with id {match.string} exists")
+            #     return False
             if stream:
                 release.size = 0
                 for version in release.files:
@@ -149,6 +161,7 @@ def download(element, stream=True, query='', force=False):
                             except:
                                 ui_print('[realdebrid] error: could not add magnet for release: ' + release.title, ui_settings.debug)
                                 continue
+
                             response = post('https://api.real-debrid.com/rest/1.0/torrents/selectFiles/' + torrent_id,{'files': str(','.join(cached_ids))})
                             response = get('https://api.real-debrid.com/rest/1.0/torrents/info/' + torrent_id)
                             actual_title = ""
@@ -179,7 +192,7 @@ def download(element, stream=True, query='', force=False):
                                     except:
                                         break
                                 release.files = version.files
-                                ui_print('[realdebrid] adding cached release: ' + release.title + 'Actual Title: ' + actual_title)
+                                ui_print(f'[realdebrid] adding cached release:{release.title}|{actual_title}|{torrent_id}')
                                 if not actual_title == "":
                                     release.title = actual_title
                                 return True
@@ -242,4 +255,90 @@ def check(element, force=False):
                         release.size = release.files[0].size
                         release.cached += ['RD']
                         continue
-        ui_print("done",ui_settings.debug)
+        ui_print(f"done Releases: {len(element.Releases)} Cached: {len(release.cached)}",ui_settings.debug)
+
+def user():
+    url = "https://api.real-debrid.com/rest/1.0/user"
+    response = get(url)
+    if response:
+        for key, value in vars(response).items():
+            ui_print(f"{key}: {value}")
+
+
+def get_basename(filename):
+    basename = os.path.basename(filename)
+    name, extension = os.path.splitext(basename)
+    if extension in ['.mkv', '.mp4', '.avi']:
+        return name
+    else:
+        return filename
+
+def create_name_dict():
+    global name_dict
+    
+    ui_print("[realdebrid] creating name_dict", debug=ui_settings.debug)
+    name_dict = {}
+    limit = 2500
+    url = f'https://api.real-debrid.com/rest/1.0/torrents?limit={limit}'
+    response = get(url, return_generic_response=True)
+    ids=set()
+    dupe_names={}
+
+    if response:
+        total_count = int(response.headers.get('X-Total-Count', 0))
+        max_pages = (total_count // limit) + (1 if total_count % limit > 0 else 0)
+
+        data = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
+        for torrent in data:
+            name = get_basename(torrent.filename)
+            if torrent.filename in name_dict:
+                dupe_names[torrent.id] = name
+            name_dict[name] = torrent
+            ids.add(torrent.id)
+
+        for page in range(2, max_pages + 1):  # start from 2 because we already fetched the first page
+            url = f'https://api.real-debrid.com/rest/1.0/torrents?page={page}&limit={limit}'
+            response = get(url, return_generic_response=True)
+            data = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
+
+
+            if response:
+                for torrent in data:
+                    name = get_basename(torrent.filename)
+                    if torrent.filename in name_dict:
+                        dupe_names[torrent.id] = name
+                    name_dict[name] = torrent
+                    ids.add(torrent.id)
+            else:
+                ui_print("[realdebrid] error: Unable to fetch torrents.")
+                break  # stop fetching if there's an error
+
+    else:
+        ui_print("[realdebrid] error: Unable to fetch torrents.")
+
+    ui_print(f"[realdebrid] Found {len(name_dict)} Titles, {len(ids)} Torrents")
+    ui_print(f"[realdebrid] Found {len(dupe_names)} Duplicate Titles")
+    #print Titles and ids:
+    for n,i in dupe_names.items():
+            ui_print(f"[realdebrid] Duplicate Title: {n}: {i}")
+            #delete('https://api.real-debrid.com/rest/1.0/torrents/delete/' + n)
+    return name_dict
+
+def check_exists(torrent_name):
+    name = get_basename(torrent_name)
+    if get_basename(name) in name_dict:
+        ui_print(f"[realdebrid] Torrent with name {name} exists: {name_dict[name]} Checked {len(name_dict)} names.")
+        return True
+    else:
+        ui_print(f"[realdebrid] Torrent with name {name} does not exist. Checked {len(name_dict)} names.")
+        return False
+
+
+if __name__ == "__main__":
+    if not api_key:
+        api_key = os.getenv('REALDEBRID_API_KEY')
+        print(f'api_key: {api_key}')
+    user()
+    create_name_dict()
+    check = ''
+    print(f'check: {check_exists(check)}')

@@ -159,9 +159,7 @@ def get(url):
 def post(url, data):
     try:
         response = session.post(url, headers={
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36',
-            'Content-type': "application/json", "trakt-api-key": client_id, "trakt-api-version": "2",
-            "Authorization": "Bearer " + current_user[1]}, data=data)
+            'Content-type': "application/json"}, data=data)
         logerror(response)
         response = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
         time.sleep(1.1)
@@ -323,7 +321,7 @@ class watchlist(classes.watchlist):
                 except Exception as e:
                     ui_print("[trakt error]: (exception): " + str(e), debug=ui_settings.debug)
                     continue
-        ui_print('done')
+        ui_print(f"[trakt] {len(self.data)} {list_type} items found", debug=ui_settings.debug)
 
     def update(self):
         global current_user
@@ -480,7 +478,6 @@ class watchlist(classes.watchlist):
             ui_print("[trakt error]: (exception): " + str(e), debug=ui_settings.debug)
         if not deleted:
             ui_print("[trakt error]: couldnt delete media item from any trakt list.", debug=ui_settings.debug)
-
 class season(classes.media):
     def __init__(self, other):
         self.watchlist = watchlist
@@ -514,7 +511,6 @@ class season(classes.media):
                 episode_.user = self.user
             self.Episodes += [episode(episode_)]
         self.leafCount = len(self.Episodes)
-
 class episode(classes.media):
     def __init__(self, other):
         self.watchlist = watchlist
@@ -1029,6 +1025,7 @@ class library(classes.library):
                     return False
                 current_user = user
                 history = library.ignore.history()
+                ui_print(f"[trakt] Checking if movie {self.title} is ignored... http://trakt.tv/movie/{self.guid} https://debridmediamanager.com/movie/{self.ids.imdb} https://www.imdb.com/title/{self.ids.imdb}")
                 if self.type == "movie":
                     if self in history:
                         if not self in  classes.ignore.ignored:
@@ -1106,6 +1103,7 @@ class library(classes.library):
                         element.movie.EID = setEID(element.movie)
                         history.append(classes.media(element.movie))
                 library.ignore.watched = history
+                ui_print("[trakt] successfully checked ignore status for " + str(len(history)) + " items", debug=ui_settings.debug)
                 return history
             except Exception as e:
                 ui_print("[trakt] error: couldnt check ignore status for item: " + str(e), debug=ui_settings.debug)

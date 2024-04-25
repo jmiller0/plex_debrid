@@ -11,7 +11,7 @@ def load(module,variable):
             ui_print("["+module+"] reading cached "+variable+" file ...")
             with open(filename, 'rb') as f:
                 cache = pickle.load(f)
-            ui_print("done")
+            ui_print(f"done {len(cache)} items found")
     except:
         ui_print("["+module+"] error: couldnt read cached "+variable+" file.")       
         cache = []
