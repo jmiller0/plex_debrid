@@ -340,5 +340,5 @@ if __name__ == "__main__":
         print(f'api_key: {api_key}')
     user()
     create_name_dict()
-    check = 'Voyeur.2017.1080p.Netflix.WEB-DL.DD5.1.x264-QOQ'
+    check = ''
     print(f'check: {check_exists(check)}')
