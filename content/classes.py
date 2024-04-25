@@ -1220,6 +1220,12 @@ class media:
                         refresh_ = True
                         if not retry and (self.watchlist.autoremove == "both" or self.watchlist.autoremove == "movie"):
                             self.watchlist.remove([], self)
+                            # ignore here
+                            try:
+                                self.library.ignore.add(self)
+                            except Exception as e:
+                                ui_print(f'error adding to ignore: {e}')
+
                         toc = time.perf_counter()
                         ui_print('took ' + str(round(toc - tic, 2)) + 's')
                     if retry:

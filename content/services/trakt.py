@@ -321,7 +321,7 @@ class watchlist(classes.watchlist):
                 except Exception as e:
                     ui_print("[trakt error]: (exception): " + str(e), debug=ui_settings.debug)
                     continue
-        ui_print('done')
+        ui_print(f"[trakt] {len(self.data)} {list_type} items found", debug=ui_settings.debug)
 
     def update(self):
         global current_user
@@ -478,7 +478,6 @@ class watchlist(classes.watchlist):
             ui_print("[trakt error]: (exception): " + str(e), debug=ui_settings.debug)
         if not deleted:
             ui_print("[trakt error]: couldnt delete media item from any trakt list.", debug=ui_settings.debug)
-
 class season(classes.media):
     def __init__(self, other):
         self.watchlist = watchlist
@@ -512,7 +511,6 @@ class season(classes.media):
                 episode_.user = self.user
             self.Episodes += [episode(episode_)]
         self.leafCount = len(self.Episodes)
-
 class episode(classes.media):
     def __init__(self, other):
         self.watchlist = watchlist
@@ -1027,7 +1025,7 @@ class library(classes.library):
                     return False
                 current_user = user
                 history = library.ignore.history()
-                ui_print(f"[trakt] Checking if movie {self.title} is ignored... http://trakt.tv/movie/{self.guid}")
+                ui_print(f"[trakt] Checking if movie {self.title} is ignored... http://trakt.tv/movie/{self.guid} https://debridmediamanager.com/movie/{self.ids.imdb} https://www.imdb.com/title/{self.ids.imdb}")
                 if self.type == "movie":
                     if self in history:
                         if not self in  classes.ignore.ignored:
