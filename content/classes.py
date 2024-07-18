@@ -951,6 +951,9 @@ class media:
 
     def released(self):
         try:
+            if not hasattr(self, "originallyAvailableAt"):
+                return False  # not available yet?
+
             released = datetime.datetime.utcnow(
             ) - datetime.datetime.strptime(self.originallyAvailableAt, '%Y-%m-%d')
             if hasattr(self, "offset_airtime"):
@@ -1410,6 +1413,7 @@ class media:
             if not debrid_downloaded:
                 for release in self.Releases[:]:
                     if not regex.match(self.deviation(), release.title, regex.I):
+                        ui_print("[download (show)] " + release.title + " does not match deviation " + self.deviation())
                         self.Releases.remove(release)
                 if self.season_pack(scraped_releases):
                     debrid_downloaded, retry = self.debrid_download()
