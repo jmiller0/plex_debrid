@@ -1,6 +1,6 @@
-#import modules
+# import modules
 from base import *
-#import parent modules
+# import parent modules
 from content import classes
 from ui.ui_print import *
 
@@ -13,6 +13,7 @@ current_user = ["", ""]
 current_library = []
 early_releases = "false"
 session = requests.Session()
+
 
 def setup(self, new=False):
     from settings import settings_list
@@ -92,7 +93,8 @@ def setup(self, new=False):
                                 print("Please add at least one trakt user before adding a trakt list!")
                                 time.sleep(5)
                                 return False
-                            print("To add a public list, please enter the lists url in the format shown by this example: (Example URL: '/users/giladg/lists/latest-releases') ")
+                            print(
+                                "To add a public list, please enter the lists url in the format shown by this example: (Example URL: '/users/giladg/lists/latest-releases') ")
                             print()
                             url = input("Please enter the public list url: ")
                             response, header = get('https://api.trakt.tv' + url + '/items')
@@ -135,12 +137,14 @@ def setup(self, new=False):
                 setting.setup()
         lists = [users[0][0] + "'s watchlist"]
 
+
 def logerror(response):
     if not response.status_code == 200:
         ui_print("[trakt] error: " + str(response.content), debug=ui_settings.debug)
     if response.status_code == 401:
         ui_print("[trakt] error: (401 unauthorized): trakt api key for user '" + current_user[
             0] + "' does not seem to work. Consider re-authorizing plex_debrid for this trakt user.")
+
 
 def get(url):
     try:
@@ -156,7 +160,22 @@ def get(url):
         header = None
     return response, header
 
+
 def post(url, data):
+    try:
+        response = session.post(url, headers={
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36',
+            'Content-type': "application/json", "trakt-api-key": client_id, "trakt-api-version": "2",
+            "Authorization": "Bearer " + current_user[1]}, data=data)
+        logerror(response)
+        response = json.loads(response.content, object_hook=lambda d: SimpleNamespace(**d))
+        time.sleep(1.1)
+    except:
+        response = None
+    return response
+
+
+def post2(url, data):
     try:
         response = session.post(url, headers={
             'Content-type': "application/json"}, data=data)
@@ -167,35 +186,39 @@ def post(url, data):
         response = None
     return response
 
+
 def oauth(code=""):
     if code == "":
-        response = post('https://api.trakt.tv/oauth/device/code', json.dumps({'client_id': client_id}))
+        response = post2('https://api.trakt.tv/oauth/device/code', json.dumps({'client_id': client_id}))
         if not response == None:
             return response.device_code, response.user_code
         else:
-            print("trakt.tv could not be reached right now! Please try again later. The script will most likely exit after this message.")
+            print(
+                "trakt.tv could not be reached right now! Please try again later. The script will most likely exit after this message.")
             time.sleep(5)
     else:
         response = None
         while response == None:
-            response = post('https://api.trakt.tv/oauth/device/token', json.dumps(
+            response = post2('https://api.trakt.tv/oauth/device/token', json.dumps(
                 {'code': code, 'client_id': client_id, 'client_secret': client_secret}))
             time.sleep(1)
         return response.access_token
 
+
 def setEID(self):
     EID = []
-    if hasattr(self,"ids"):
-        if hasattr(self.ids,"imdb"):
+    if hasattr(self, "ids"):
+        if hasattr(self.ids, "imdb"):
             if not self.ids.imdb == None:
                 EID += ['imdb://' + str(self.ids.imdb)]
-        if hasattr(self.ids,"tmdb"):
+        if hasattr(self.ids, "tmdb"):
             if not self.ids.tmdb == None:
                 EID += ['tmdb://' + str(self.ids.tmdb)]
-        if hasattr(self.ids,"tvdb"):
+        if hasattr(self.ids, "tvdb"):
             if not self.ids.tvdb == None:
                 EID += ['tvdb://' + str(self.ids.tvdb)]
     return EID
+
 
 class watchlist(classes.watchlist):
     autoremove = "movie"
@@ -228,7 +251,8 @@ class watchlist(classes.watchlist):
                             element.show.user = user
                             element.show.guid = element.show.ids.trakt
                             try:
-                                element.show.watchlistedAt = datetime.datetime.timestamp(datetime.datetime.strptime(element.listed_at,'%Y-%m-%dT%H:%M:%S.000Z'))
+                                element.show.watchlistedAt = datetime.datetime.timestamp(
+                                    datetime.datetime.strptime(element.listed_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                             except:
                                 element.show.watchlistedAt = 0
                             if not element.show in self.data:
@@ -238,7 +262,8 @@ class watchlist(classes.watchlist):
                             element.movie.user = user
                             element.movie.guid = element.movie.ids.trakt
                             try:
-                                element.movie.watchlistedAt = datetime.datetime.timestamp(datetime.datetime.strptime(element.listed_at,'%Y-%m-%dT%H:%M:%S.000Z'))
+                                element.movie.watchlistedAt = datetime.datetime.timestamp(
+                                    datetime.datetime.strptime(element.listed_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                             except:
                                 element.movie.watchlistedAt = 0
                             if not element.movie in self.data:
@@ -269,14 +294,16 @@ class watchlist(classes.watchlist):
                             p_list_id = p_list.ids.trakt
                             break
                     if not p_list_id == None:
-                        watchlist_items, header = get('https://api.trakt.tv/users/me/lists/'+str(p_list_id)+'/items/movies,shows?extended=full')
+                        watchlist_items, header = get('https://api.trakt.tv/users/me/lists/' + str(
+                            p_list_id) + '/items/movies,shows?extended=full')
                         for element in watchlist_items:
                             if hasattr(element, 'show'):
                                 element.show.type = 'show'
                                 element.show.user = user
                                 element.show.guid = element.show.ids.trakt
                                 try:
-                                    element.show.watchlistedAt = datetime.datetime.timestamp(datetime.datetime.strptime(element.listed_at,'%Y-%m-%dT%H:%M:%S.000Z'))
+                                    element.show.watchlistedAt = datetime.datetime.timestamp(
+                                        datetime.datetime.strptime(element.listed_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                                 except:
                                     element.show.watchlistedAt = 0
                                 if not element.show in self.data:
@@ -286,7 +313,8 @@ class watchlist(classes.watchlist):
                                 element.movie.user = user
                                 element.movie.guid = element.movie.ids.trakt
                                 try:
-                                    element.movie.watchlistedAt = datetime.datetime.timestamp(datetime.datetime.strptime(element.listed_at,'%Y-%m-%dT%H:%M:%S.000Z'))
+                                    element.movie.watchlistedAt = datetime.datetime.timestamp(
+                                        datetime.datetime.strptime(element.listed_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                                 except:
                                     element.movie.watchlistedAt = 0
                                 if not element.movie in self.data:
@@ -303,7 +331,8 @@ class watchlist(classes.watchlist):
                             element.show.user = user
                             element.show.guid = element.show.ids.trakt
                             try:
-                                element.show.watchlistedAt = datetime.datetime.timestamp(datetime.datetime.strptime(element.listed_at,'%Y-%m-%dT%H:%M:%S.000Z'))
+                                element.show.watchlistedAt = datetime.datetime.timestamp(
+                                    datetime.datetime.strptime(element.listed_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                             except:
                                 element.show.watchlistedAt = 0
                             if not element.show in self.data:
@@ -313,7 +342,8 @@ class watchlist(classes.watchlist):
                             element.movie.user = user
                             element.movie.guid = element.movie.ids.trakt
                             try:
-                                element.movie.watchlistedAt = datetime.datetime.timestamp(datetime.datetime.strptime(element.listed_at,'%Y-%m-%dT%H:%M:%S.000Z'))
+                                element.movie.watchlistedAt = datetime.datetime.timestamp(
+                                    datetime.datetime.strptime(element.listed_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                             except:
                                 element.movie.watchlistedAt = 0
                             if not element.movie in self.data:
@@ -321,7 +351,7 @@ class watchlist(classes.watchlist):
                 except Exception as e:
                     ui_print("[trakt error]: (exception): " + str(e), debug=ui_settings.debug)
                     continue
-        ui_print(f"[trakt] {len(self.data)} {list_type} items found", debug=ui_settings.debug)
+        ui_print('done')
 
     def update(self):
         global current_user
@@ -347,12 +377,14 @@ class watchlist(classes.watchlist):
                             element.show.user = user
                             element.show.guid = element.show.ids.trakt
                             try:
-                                element.show.watchlistedAt = datetime.datetime.timestamp(datetime.datetime.strptime(element.listed_at,'%Y-%m-%dT%H:%M:%S.000Z'))
+                                element.show.watchlistedAt = datetime.datetime.timestamp(
+                                    datetime.datetime.strptime(element.listed_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                             except:
                                 element.show.watchlistedAt = 0
                             if not element.show in self.data:
                                 refresh = True
-                                ui_print('[trakt] item: "' + element.show.title + '" found in ' + current_user[0] + "'s trakt watchlist.")
+                                ui_print('[trakt] item: "' + element.show.title + '" found in ' + current_user[
+                                    0] + "'s trakt watchlist.")
                                 self.data.append(show(element.show))
                             new_watchlist += [element.show]
                         elif hasattr(element, 'movie'):
@@ -360,12 +392,14 @@ class watchlist(classes.watchlist):
                             element.movie.user = user
                             element.movie.guid = element.movie.ids.trakt
                             try:
-                                element.movie.watchlistedAt = datetime.datetime.timestamp(datetime.datetime.strptime(element.listed_at,'%Y-%m-%dT%H:%M:%S.000Z'))
+                                element.movie.watchlistedAt = datetime.datetime.timestamp(
+                                    datetime.datetime.strptime(element.listed_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                             except:
                                 element.movie.watchlistedAt = 0
                             if not element.movie in self.data:
                                 refresh = True
-                                ui_print('[trakt] item: "' + element.movie.title + '" found in ' + current_user[0] + "'s trakt watchlist.")
+                                ui_print('[trakt] item: "' + element.movie.title + '" found in ' + current_user[
+                                    0] + "'s trakt watchlist.")
                                 self.data.append(movie(element.movie))
                             new_watchlist += [element.movie]
                 except Exception as e:
@@ -380,19 +414,22 @@ class watchlist(classes.watchlist):
                             p_list_id = p_list.ids.trakt
                             break
                     if not p_list_id == None:
-                        watchlist_items, header = get('https://api.trakt.tv/users/me/lists/'+str(p_list_id)+'/items/movies,shows?extended=full')
+                        watchlist_items, header = get('https://api.trakt.tv/users/me/lists/' + str(
+                            p_list_id) + '/items/movies,shows?extended=full')
                         for element in watchlist_items:
                             if hasattr(element, 'show'):
                                 element.show.type = 'show'
                                 element.show.user = user
                                 element.show.guid = element.show.ids.trakt
                                 try:
-                                    element.show.watchlistedAt = datetime.datetime.timestamp(datetime.datetime.strptime(element.listed_at,'%Y-%m-%dT%H:%M:%S.000Z'))
+                                    element.show.watchlistedAt = datetime.datetime.timestamp(
+                                        datetime.datetime.strptime(element.listed_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                                 except:
                                     element.show.watchlistedAt = 0
                                 if not element.show in self.data:
                                     refresh = True
-                                    ui_print('[trakt] item: "' + element.show.title + '" found in ' + current_user[0] + "'s private list: "+p_list.name+".")
+                                    ui_print('[trakt] item: "' + element.show.title + '" found in ' + current_user[
+                                        0] + "'s private list: " + p_list.name + ".")
                                     self.data.append(show(element.show))
                                 new_watchlist += [element.show]
                             elif hasattr(element, 'movie'):
@@ -400,12 +437,14 @@ class watchlist(classes.watchlist):
                                 element.movie.user = user
                                 element.movie.guid = element.movie.ids.trakt
                                 try:
-                                    element.movie.watchlistedAt = datetime.datetime.timestamp(datetime.datetime.strptime(element.listed_at,'%Y-%m-%dT%H:%M:%S.000Z'))
+                                    element.movie.watchlistedAt = datetime.datetime.timestamp(
+                                        datetime.datetime.strptime(element.listed_at, '%Y-%m-%dT%H:%M:%S.000Z'))
                                 except:
                                     element.movie.watchlistedAt = 0
                                 if not element.movie in self.data:
                                     refresh = True
-                                    ui_print('[trakt] item: "' + element.movie.title + '" found in ' + current_user[0] + "'s private list: "+p_list.name+".")
+                                    ui_print('[trakt] item: "' + element.movie.title + '" found in ' + current_user[
+                                        0] + "'s private list: " + p_list.name + ".")
                                     self.data.append(movie(element.movie))
                                 new_watchlist += [element.movie]
                 except Exception as e:
@@ -421,11 +460,11 @@ class watchlist(classes.watchlist):
     def remove(self, original_element):
         global current_user
         element = copy.deepcopy(original_element)
-        if not hasattr(element,"user"):
+        if not hasattr(element, "user"):
             return
         user = copy.deepcopy(element.user)
-        if hasattr(element,"watchlist"):
-            delattr(element,"watchlist")
+        if hasattr(element, "watchlist"):
+            delattr(element, "watchlist")
         data = []
         shows = []
         movies = []
@@ -451,8 +490,9 @@ class watchlist(classes.watchlist):
         data = {'movies': movies, 'shows': shows}
         current_user = user
         try:
-            response = post('https://api.trakt.tv/sync/watchlist/remove', json.dumps(data, default=lambda o: o.__dict__))
-            if hasattr(response,"deleted"):
+            response = post('https://api.trakt.tv/sync/watchlist/remove',
+                            json.dumps(data, default=lambda o: o.__dict__))
+            if hasattr(response, "deleted"):
                 if response.deleted.movies > 0 or response.deleted.shows > 0:
                     ui_print('[trakt] item: "' + element.title + '" removed from ' + user[0] + '`s watchlist')
                     deleted = True
@@ -469,15 +509,19 @@ class watchlist(classes.watchlist):
                             p_list_id = p_list.ids.trakt
                             break
                     if not p_list_id == None:
-                        response = post('https://api.trakt.tv/users/me/lists/'+str(p_list_id)+'/items/remove', json.dumps(data, default=lambda o: o.__dict__))
-                        if hasattr(response,"deleted"):
+                        response = post('https://api.trakt.tv/users/me/lists/' + str(p_list_id) + '/items/remove',
+                                        json.dumps(data, default=lambda o: o.__dict__))
+                        if hasattr(response, "deleted"):
                             if response.deleted.movies > 0 or response.deleted.shows > 0:
-                                ui_print('[trakt] item: "' + element.title + '" removed from ' + user[0] + "'s private list: " + p_list.name)
+                                ui_print('[trakt] item: "' + element.title + '" removed from ' + user[
+                                    0] + "'s private list: " + p_list.name)
                                 deleted = True
         except Exception as e:
             ui_print("[trakt error]: (exception): " + str(e), debug=ui_settings.debug)
         if not deleted:
             ui_print("[trakt error]: couldnt delete media item from any trakt list.", debug=ui_settings.debug)
+
+
 class season(classes.media):
     def __init__(self, other):
         self.watchlist = watchlist
@@ -491,7 +535,9 @@ class season(classes.media):
         try:
             if hasattr(self, 'first_aired'):
                 if not self.first_aired == None:
-                    self.originallyAvailableAt = datetime.datetime.strptime(self.first_aired,'%Y-%m-%dT%H:%M:%S.000Z').strftime('%Y-%m-%d')
+                    self.originallyAvailableAt = datetime.datetime.strptime(self.first_aired,
+                                                                            '%Y-%m-%dT%H:%M:%S.000Z').strftime(
+                        '%Y-%m-%d')
                 else:
                     self.originallyAvailableAt = datetime.datetime.utcnow().strftime('%Y-%m-%d')
             else:
@@ -507,10 +553,12 @@ class season(classes.media):
             episode_.grandparentEID = self.parentEID
             episode_.parentIndex = self.index
             episode_.parentEID = self.EID
-            if hasattr(self,"user"):
+            if hasattr(self, "user"):
                 episode_.user = self.user
             self.Episodes += [episode(episode_)]
         self.leafCount = len(self.Episodes)
+
+
 class episode(classes.media):
     def __init__(self, other):
         self.watchlist = watchlist
@@ -535,6 +583,7 @@ class episode(classes.media):
         self.index = self.number
         self.type = 'episode'
 
+
 class show(classes.media):
     def __init__(self, other):
         self.watchlist = watchlist
@@ -543,7 +592,8 @@ class show(classes.media):
         self.guid = self.ids.trakt
         self.EID = setEID(self)
         try:
-            self.originallyAvailableAt = datetime.datetime.strptime(self.first_aired,'%Y-%m-%dT%H:%M:%S.000Z').strftime('%Y-%m-%d')
+            self.originallyAvailableAt = datetime.datetime.strptime(self.first_aired,
+                                                                    '%Y-%m-%dT%H:%M:%S.000Z').strftime('%Y-%m-%d')
         except:
             self.originallyAvailableAt = datetime.datetime.utcnow().strftime('%Y-%m-%d')
         response, header = get(
@@ -555,12 +605,13 @@ class show(classes.media):
                 season_.parentTitle = self.title
                 season_.parentGuid = self.guid
                 season_.parentEID = self.EID
-                if hasattr(self,"user"):
+                if hasattr(self, "user"):
                     season_.user = self.user
                 self.Seasons += [season(season_)]
         for season_ in self.Seasons:
             leafCount += season_.leafCount
         self.leafCount = leafCount
+
 
 class movie(classes.media):
     def __init__(self, other):
@@ -572,6 +623,7 @@ class movie(classes.media):
             self.originallyAvailableAt = datetime.datetime.utcnow().strftime('%Y-%m-%d')
         self.__dict__.update(other.__dict__)
         self.EID = setEID(self)
+
 
 class library(classes.library):
     name = 'Trakt Collection'
@@ -592,7 +644,8 @@ class library(classes.library):
             print()
         back = False
         while not back:
-            print('Please choose the trakt user whos trakt collection plex_debrid should use to determine your current media collection.')
+            print(
+                'Please choose the trakt user whos trakt collection plex_debrid should use to determine your current media collection.')
             print()
             indices = []
             for index, user in enumerate(users):
@@ -646,11 +699,12 @@ class library(classes.library):
             return collection
         except Exception as e:
             ui_print("[trakt] error: (exception): " + str(e), debug=ui_settings.debug)
-            ui_print("[trakt] error: couldnt get trakt collection. the script will pause all downloads to avoid unwanted behavior.")
+            ui_print(
+                "[trakt] error: couldnt get trakt collection. the script will pause all downloads to avoid unwanted behavior.")
             return []
 
     class refresh(classes.refresh):
-        
+
         user = []
         name = 'Trakt Collection'
 
@@ -669,7 +723,8 @@ class library(classes.library):
                 print()
             back = False
             while not back:
-                print('Please choose the trakt user whos trakt collection plex_debrid should update after a successful download.')
+                print(
+                    'Please choose the trakt user whos trakt collection plex_debrid should update after a successful download.')
                 print()
                 indices = []
                 for index, user in enumerate(users):
@@ -722,7 +777,7 @@ class library(classes.library):
                                 if not episode.released():
                                     season.Episodes.remove(episode)
             except:
-                ui_print("[trakt] error: couldnt remove future episodes from show",ui_settings.debug)
+                ui_print("[trakt] error: couldnt remove future episodes from show", ui_settings.debug)
             # add release quality to element
             if element.type == 'show':
                 if hasattr(element, 'Seasons'):
@@ -736,7 +791,8 @@ class library(classes.library):
                                 episode.media_type = 'digital'
                                 episode.resolution = resolution
                             for attribute in episode.__dict__.copy():
-                                if not (attribute == 'number' or attribute == 'resolution' or attribute == 'media_type' or attribute == 'hdr'):
+                                if not (
+                                        attribute == 'number' or attribute == 'resolution' or attribute == 'media_type' or attribute == 'hdr'):
                                     delattr(episode, attribute)
                         season.episodes = season.Episodes
                         for attribute in season.__dict__.copy():
@@ -751,7 +807,8 @@ class library(classes.library):
                     if not value:
                         delattr(element.ids, ids)
                 for attribute in element.__dict__.copy():
-                    if not (attribute == 'ids' or attribute == 'seasons' or attribute == 'title' or attribute == 'year'):
+                    if not (
+                            attribute == 'ids' or attribute == 'seasons' or attribute == 'title' or attribute == 'year'):
                         delattr(element, attribute)
                 shows += [element]
             elif element.type == 'movie':
@@ -768,13 +825,14 @@ class library(classes.library):
                     if not value:
                         delattr(element.ids, ids)
                 for attribute in element.__dict__.copy():
-                    if not (attribute == 'ids' or attribute == 'resolution' or attribute == 'media_type' or attribute == 'hdr' or attribute == 'title' or attribute == 'year'):
+                    if not (
+                            attribute == 'ids' or attribute == 'resolution' or attribute == 'media_type' or attribute == 'hdr' or attribute == 'title' or attribute == 'year'):
                         delattr(element, attribute)
                 movies += [element]
             # add element to collection
             current_user = library.refresh.user
             data = {'movies': movies, 'shows': shows}
-            response = post('https://api.trakt.tv/sync/collection',json.dumps(data, default=lambda o: o.__dict__))
+            response = post('https://api.trakt.tv/sync/collection', json.dumps(data, default=lambda o: o.__dict__))
             ui_print('[trakt] item: ' + element.title + ' added to ' + library.refresh.user[0] + "'s collection")
 
     class ignore(classes.ignore):
@@ -806,7 +864,7 @@ class library(classes.library):
                 choice = input("Choose an action: ")
                 if choice == '1':
                     addable_users = []
-                    for index,plexuser in enumerate(users):
+                    for index, plexuser in enumerate(users):
                         addable_users += [plexuser[0]]
                     if len(addable_users) == 0:
                         print()
@@ -817,35 +875,35 @@ class library(classes.library):
                     print("Please choose a trakt users, whos watch status should be used to ignore content: ")
                     print()
                     print("0) Back")
-                    for index,ignoreuser in enumerate(addable_users):
-                        print(str(index+1) + ") Trakt user '" + ignoreuser + "'")
-                        indices += [str(index+1)]
+                    for index, ignoreuser in enumerate(addable_users):
+                        print(str(index + 1) + ") Trakt user '" + ignoreuser + "'")
+                        indices += [str(index + 1)]
                     print()
                     choice = input("Please choose a trakt user: ")
                     if choice in indices:
-                        library.ignore.user = addable_users[int(choice)-1]
+                        library.ignore.user = addable_users[int(choice) - 1]
                         print()
-                        print("Successfully changed to trakt user '" + addable_users[int(choice)-1] + "'")
+                        print("Successfully changed to trakt user '" + addable_users[int(choice) - 1] + "'")
                         print()
                         time.sleep(3)
             else:
                 addable_users = []
-                for index,plexuser in enumerate(users):
+                for index, plexuser in enumerate(users):
                     addable_users += [plexuser[0]]
                 print("Please choose a trakt user, whos watch status should be used to ignore content: ")
                 print()
                 indices = []
-                for index,ignoreuser in enumerate(addable_users):
-                    print(str(index+1) + ") Trakt user '" + ignoreuser + "'")
-                    indices += [str(index+1)]
+                for index, ignoreuser in enumerate(addable_users):
+                    print(str(index + 1) + ") Trakt user '" + ignoreuser + "'")
+                    indices += [str(index + 1)]
                 print()
                 choice = input("Please choose a trakt user: ")
                 if choice in indices:
-                    library.ignore.user = addable_users[int(choice)-1]
+                    library.ignore.user = addable_users[int(choice) - 1]
                     if not library.ignore.name in classes.ignore.active:
                         classes.ignore.active += [library.ignore.name]
                     print()
-                    print("Successfully added trakt user '" + addable_users[int(choice)-1] + "'")
+                    print("Successfully added trakt user '" + addable_users[int(choice) - 1] + "'")
                     print()
                     time.sleep(3)
 
@@ -859,7 +917,8 @@ class library(classes.library):
                         user = plexuser
                         break
                 if user == None:
-                    print("[trakt] error: Could not find trakt ignore service user: '"+ignoreuser+"'. Make sure this trakt user exists.")
+                    print(
+                        "[trakt] error: Could not find trakt ignore service user: '" + ignoreuser + "'. Make sure this trakt user exists.")
                     return
                 current_user = user
                 ui_print('[trakt] ignoring item: ' + self.query() + " for user: '" + ignoreuser + "'")
@@ -884,7 +943,8 @@ class library(classes.library):
                         if not value:
                             delattr(element.ids, ids)
                     for attribute in element.__dict__.copy():
-                        if not (attribute == 'ids' or attribute == 'seasons' or attribute == 'title' or attribute == 'year'):
+                        if not (
+                                attribute == 'ids' or attribute == 'seasons' or attribute == 'title' or attribute == 'year'):
                             delattr(element, attribute)
                     shows += [element]
                 elif element.type == 'season':
@@ -899,7 +959,8 @@ class library(classes.library):
                         if not value:
                             delattr(element.ids, ids)
                     for attribute in element.__dict__.copy():
-                        if not (attribute == 'ids' or attribute == 'episodes' or attribute == 'title' or attribute == 'year'):
+                        if not (
+                                attribute == 'ids' or attribute == 'episodes' or attribute == 'title' or attribute == 'year'):
                             delattr(element, attribute)
                     seasons += [element]
                 elif element.type == 'movie':
@@ -909,7 +970,8 @@ class library(classes.library):
                         if not value:
                             delattr(element.ids, ids)
                     for attribute in element.__dict__.copy():
-                        if not (attribute == 'ids' or attribute == 'resolution' or attribute == 'media_type' or attribute == 'hdr' or attribute == 'title' or attribute == 'year'):
+                        if not (
+                                attribute == 'ids' or attribute == 'resolution' or attribute == 'media_type' or attribute == 'hdr' or attribute == 'title' or attribute == 'year'):
                             delattr(element, attribute)
                     movies += [element]
                 elif element.type == 'episode':
@@ -919,12 +981,13 @@ class library(classes.library):
                         if not value:
                             delattr(element.ids, ids)
                     for attribute in element.__dict__.copy():
-                        if not (attribute == 'ids' or attribute == 'resolution' or attribute == 'media_type' or attribute == 'hdr' or attribute == 'title' or attribute == 'year'):
+                        if not (
+                                attribute == 'ids' or attribute == 'resolution' or attribute == 'media_type' or attribute == 'hdr' or attribute == 'title' or attribute == 'year'):
                             delattr(element, attribute)
                     episodes += [element]
                 # add element to collection
                 data = {'movies': movies, 'shows': shows, 'seasons': seasons, 'episodes': episodes}
-                response = post('https://api.trakt.tv/sync/history',json.dumps(data, default=lambda o: o.__dict__))
+                response = post('https://api.trakt.tv/sync/history', json.dumps(data, default=lambda o: o.__dict__))
                 if not self in classes.ignore.ignored:
                     classes.ignore.ignored += [self]
             except Exception as e:
@@ -940,7 +1003,8 @@ class library(classes.library):
                         user = plexuser
                         break
                 if user == None:
-                    print("[trakt] error: Could not find trakt ignore service user: '"+ignoreuser+"'. Make sure this trakt user exists.")
+                    print(
+                        "[trakt] error: Could not find trakt ignore service user: '" + ignoreuser + "'. Make sure this trakt user exists.")
                     return
                 current_user = user
                 ui_print('[trakt] un-ignoring item: ' + self.query() + " for user: '" + ignoreuser + "'")
@@ -965,7 +1029,8 @@ class library(classes.library):
                         if not value:
                             delattr(element.ids, ids)
                     for attribute in element.__dict__.copy():
-                        if not (attribute == 'ids' or attribute == 'seasons' or attribute == 'title' or attribute == 'year'):
+                        if not (
+                                attribute == 'ids' or attribute == 'seasons' or attribute == 'title' or attribute == 'year'):
                             delattr(element, attribute)
                     shows += [element]
                 elif element.type == 'season':
@@ -980,7 +1045,8 @@ class library(classes.library):
                         if not value:
                             delattr(element.ids, ids)
                     for attribute in element.__dict__.copy():
-                        if not (attribute == 'ids' or attribute == 'episodes' or attribute == 'title' or attribute == 'year'):
+                        if not (
+                                attribute == 'ids' or attribute == 'episodes' or attribute == 'title' or attribute == 'year'):
                             delattr(element, attribute)
                     seasons += [element]
                 elif element.type == 'movie':
@@ -990,7 +1056,8 @@ class library(classes.library):
                         if not value:
                             delattr(element.ids, ids)
                     for attribute in element.__dict__.copy():
-                        if not (attribute == 'ids' or attribute == 'resolution' or attribute == 'media_type' or attribute == 'hdr' or attribute == 'title' or attribute == 'year'):
+                        if not (
+                                attribute == 'ids' or attribute == 'resolution' or attribute == 'media_type' or attribute == 'hdr' or attribute == 'title' or attribute == 'year'):
                             delattr(element, attribute)
                     movies += [element]
                 elif element.type == 'episode':
@@ -1000,12 +1067,14 @@ class library(classes.library):
                         if not value:
                             delattr(element.ids, ids)
                     for attribute in element.__dict__.copy():
-                        if not (attribute == 'ids' or attribute == 'resolution' or attribute == 'media_type' or attribute == 'hdr' or attribute == 'title' or attribute == 'year'):
+                        if not (
+                                attribute == 'ids' or attribute == 'resolution' or attribute == 'media_type' or attribute == 'hdr' or attribute == 'title' or attribute == 'year'):
                             delattr(element, attribute)
                     episodes += [element]
                 # add element to collection
                 data = {'movies': movies, 'shows': shows, 'seasons': seasons, 'episodes': episodes}
-                response = post('https://api.trakt.tv/sync/history/remove',json.dumps(data, default=lambda o: o.__dict__))
+                response = post('https://api.trakt.tv/sync/history/remove',
+                                json.dumps(data, default=lambda o: o.__dict__))
                 if self in classes.ignore.ignored:
                     classes.ignore.ignored.remove(self)
             except Exception as e:
@@ -1021,14 +1090,14 @@ class library(classes.library):
                         user = plexuser
                         break
                 if user == None:
-                    print("[trakt] error: Could not find trakt ignore service user: '"+ignoreuser+"'. Make sure this trakt user exists.")
+                    print(
+                        "[trakt] error: Could not find trakt ignore service user: '" + ignoreuser + "'. Make sure this trakt user exists.")
                     return False
                 current_user = user
                 history = library.ignore.history()
-                ui_print(f"[trakt] Checking if movie {self.title} is ignored... http://trakt.tv/movie/{self.guid} https://debridmediamanager.com/movie/{self.ids.imdb} https://www.imdb.com/title/{self.ids.imdb}")
                 if self.type == "movie":
                     if self in history:
-                        if not self in  classes.ignore.ignored:
+                        if not self in classes.ignore.ignored:
                             classes.ignore.ignored += [self]
                         return True
                 if self.type == "episode":
@@ -1037,7 +1106,7 @@ class library(classes.library):
                             for season in show.Seasons:
                                 for episode in season.Episodes:
                                     if episode == self:
-                                        if not self in  classes.ignore.ignored:
+                                        if not self in classes.ignore.ignored:
                                             classes.ignore.ignored += [self]
                                         return True
                 if self.type == "show":
@@ -1050,7 +1119,7 @@ class library(classes.library):
                         matching_season = next((x for x in match.Seasons if x == season), None)
                         if len(season.Episodes) == len(matching_season.Episodes):
                             return False
-                    if not self in  classes.ignore.ignored:
+                    if not self in classes.ignore.ignored:
                         classes.ignore.ignored += [self]
                     return True
                 if self.type == "season":
@@ -1058,14 +1127,14 @@ class library(classes.library):
                         if show.type == "show":
                             for season in show.Seasons:
                                 if season == self:
-                                    if not self in  classes.ignore.ignored:
+                                    if not self in classes.ignore.ignored:
                                         classes.ignore.ignored += [self]
                                     return True
                 return False
             except Exception as e:
                 ui_print("[trakt] error: couldnt check ignore status for item: " + str(e), debug=ui_settings.debug)
                 return False
-    
+
         def history():
             data = []
             history = []
@@ -1103,13 +1172,13 @@ class library(classes.library):
                         element.movie.EID = setEID(element.movie)
                         history.append(classes.media(element.movie))
                 library.ignore.watched = history
-                ui_print("[trakt] successfully checked ignore status for " + str(len(history)) + " items", debug=ui_settings.debug)
                 return history
             except Exception as e:
                 ui_print("[trakt] error: couldnt check ignore status for item: " + str(e), debug=ui_settings.debug)
                 return None
 
-def aliases(self,lan):
+
+def aliases(self, lan):
     global current_user
     ctrs = []
     for l in lan_ctr:
@@ -1119,8 +1188,8 @@ def aliases(self,lan):
     try:
         if len(users) > 0:
             current_user = users[0]
-            type = ("shows" if self.type in ["show","season","episode"] else "movies")
-            response, header = get('https://api.trakt.tv/'+type+'/' + str(self.ids.trakt) + '/aliases')
+            type = ("shows" if self.type in ["show", "season", "episode"] else "movies")
+            response, header = get('https://api.trakt.tv/' + type + '/' + str(self.ids.trakt) + '/aliases')
             if not response == None:
                 if len(response) > 0:
                     for alias in response:
@@ -1136,15 +1205,17 @@ def aliases(self,lan):
         aliases = []
     return aliases
 
-def translations(self,lan):
+
+def translations(self, lan):
     global current_user
     translations = []
     try:
         if not lan == 'en':
             if len(users) > 0:
                 current_user = users[0]
-                type = ("shows" if self.type in ["show","season","episode"] else "movies")
-                response, header = get('https://api.trakt.tv/'+type+'/' + str(self.ids.trakt) + '/translations/'+lan)
+                type = ("shows" if self.type in ["show", "season", "episode"] else "movies")
+                response, header = get(
+                    'https://api.trakt.tv/' + type + '/' + str(self.ids.trakt) + '/translations/' + lan)
                 if not response == None:
                     if len(response) > 0:
                         for alias in response:
@@ -1158,7 +1229,8 @@ def translations(self,lan):
     except:
         translations = []
     return translations
-    
+
+
 def search(query, type):
     global current_user
     current_user = users[0]
@@ -1176,15 +1248,17 @@ def search(query, type):
         response, header = get('https://api.trakt.tv/search/tvdb?query=' + str(query))
     return response
 
+
 def match(self):
     global current_user
     current_user = users[0]
     if self.type == "season":
-        if hasattr(self,"parentEID"):
+        if hasattr(self, "parentEID"):
             for EID in self.parentEID:
                 type = "show"
-                service,query = EID.split('://')
-                response, header = get('https://api.trakt.tv/search/' + service + '/' + query + '?type=' + type + '&extended=full,episodes')
+                service, query = EID.split('://')
+                response, header = get(
+                    'https://api.trakt.tv/search/' + service + '/' + query + '?type=' + type + '&extended=full,episodes')
                 try:
                     response[0].show.type = 'show'
                     response[0].show.guid = response[0].show.ids.trakt
@@ -1192,15 +1266,16 @@ def match(self):
                     for trakt_season in trakt_show.Seasons:
                         if trakt_season == self:
                             return trakt_season
-                    ui_print("couldnt find season in matched show",ui_settings.debug)
+                    ui_print("couldnt find season in matched show", ui_settings.debug)
                     return None
                 except:
                     continue
-    elif hasattr(self,"EID"):
+    elif hasattr(self, "EID"):
         for EID in self.EID:
             type = self.type
-            service,query = EID.split('://')
-            response, header = get('https://api.trakt.tv/search/' + service + '/' + query + '?type=' + type + '&extended=full,episodes')
+            service, query = EID.split('://')
+            response, header = get(
+                'https://api.trakt.tv/search/' + service + '/' + query + '?type=' + type + '&extended=full,episodes')
             try:
                 if type == 'movie':
                     response[0].movie.type = 'movie'
